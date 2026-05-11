@@ -4,9 +4,9 @@
 
 The core idea is simple:
 
-> Every production agent should have a manifest that says who it is, who owns it, what it can do, and when it must ask for help.
+> Every production agent should have an authority contract that says who it is, who owns it, what it can request, when authority should be issued just in time, where data can flow, when it needs approval, and how it can be stopped.
 
-AgentID does **not** replace IAM, OAuth, MCP gateways, OPA, Cedar, or enterprise security tools. It sits one layer above them as a portable declaration format for agent identity, delegation, tool access, approval boundaries, audit expectations, and kill-switch behavior.
+AgentID does **not** replace IAM, OAuth, MCP gateways, OPA, Cedar, or enterprise security tools. It sits one layer above them as a portable declaration format for agent identity, delegation, tool access, intent confirmation, just-in-time authorization, data-flow boundaries, approval rules, runtime enforcement expectations, audit behavior, and kill-switch behavior.
 
 ---
 
@@ -19,8 +19,11 @@ What is often missing is a clear answer to:
 - What is this agent?
 - Who owns it?
 - What systems can it touch?
-- What actions can it take?
+- What actions can it request?
+- Which actions require just-in-time authority?
 - Which actions require approval?
+- What data is allowed to flow from one system to another?
+- Can it call other agents?
 - When does its authority expire?
 - What should be logged?
 - How can it be stopped?
@@ -29,61 +32,17 @@ AgentID turns those questions into a small manifest that can be reviewed by deve
 
 ---
 
-## Example
+## Important framing
 
-```yaml
-agent:
-  id: customer-support-refund-agent
-  name: Customer Support Refund Agent
-  owner: support-platform-team
-  environment: production
-  purpose: Handles refund triage and drafts refund decisions
-  expires_at: 2026-12-31
+Identity is necessary, but not sufficient.
 
-delegation:
-  acts_for:
-    type: user
-    required: true
-  allowed_subjects:
-    - support_rep
-    - support_manager
+A valid agent identity does not imply a valid action. An agent can have the right token and still take the wrong action because the task was ambiguous, the context was poisoned, or a downstream tool interpreted the request differently.
 
-tools:
-  - name: zendesk.search_tickets
-    access: read
-    approval: none
+AgentID treats identity as the foundation, runtime authorization as the control plane, and audit as the accountability layer.
 
-  - name: stripe.create_refund
-    access: write
-    approval: required
-    constraints:
-      max_amount_usd: 100
-      allowed_reasons:
-        - duplicate_charge
-        - service_failure
+The manifest should not be treated as a broad permission grant. It should be treated as an **eligibility contract**: what the agent may request, under what conditions, for how long, and with what approval.
 
-audit:
-  log_prompt_summary: true
-  log_tool_calls: true
-  log_decisions: true
-  retain_days: 365
-
-kill_switch:
-  enabled: true
-  revoke_on_policy_violation: true
-```
-
----
-
-## Install locally
-
-```bash
-git clone <your-repo-url>
-cd agentid
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
+For sensitive actions, actual authority should be issued **just in time** and bound to the agent, user, tool, action, resource, approval, and time window.
 
 ---
 
@@ -105,9 +64,16 @@ agentid audit examples/sample-tool-log.json --manifest examples/customer-support
 |---|---|
 | `agent` | Unique identity, owner, purpose, environment, and expiry |
 | `delegation` | Who or what the agent is allowed to act on behalf of |
+| `delegation_chain` | Whether the agent can call other agents |
+| `intent` | Actions that require explicit human confirmation |
+| `jit_authorization` | Rules for issuing temporary, scoped authority at runtime |
 | `tools` | External capabilities the agent may use |
-| `approval` | Whether an action requires explicit approval |
-| `constraints` | Limits such as max amount, allowed reasons, domains, or resource patterns |
+| `auth_mode` | Whether access is `delegated`, `service`, or `just_in_time` |
+| `approval` | Whether an action requires approval: `none`, `notify`, `human_confirm`, `step_up`, `manager`, or `block` |
+| `constraints` | Limits such as max amount, allowed reasons, token TTL, domains, or resource patterns |
+| `data_flows` | Allowed or blocked source-to-destination flows |
+| `risk_tiers` | Default approval rules by risk category |
+| `runtime` | Runtime enforcement and drift-detection expectations |
 | `audit` | What must be logged and retained |
 | `kill_switch` | Whether policy violations should revoke or suspend authority |
 
@@ -118,9 +84,13 @@ agentid audit examples/sample-tool-log.json --manifest examples/customer-support
 1. **Agents are first-class identities.**
 2. **Authority should be explicit.**
 3. **Delegation matters.**
-4. **Approval should be action-level.**
-5. **Auditability is part of identity.**
-6. **Revocation must be practical.**
+4. **Eligibility is not the same as granted authority.**
+5. **Sensitive authority should be issued just in time.**
+6. **Intent confirmation is different from delegated access.**
+7. **Data-flow boundaries matter as much as tool permissions.**
+8. **Approval should be action-level and risk-tiered.**
+9. **Auditability is part of identity.**
+10. **Revocation must be practical.**
 
 ---
 
@@ -131,10 +101,12 @@ agentid audit examples/sample-tool-log.json --manifest examples/customer-support
 - Stronger policy generation for OPA and Cedar
 - MCP tool metadata import/export
 - OAuth scope recommendation
+- JIT grant simulator
 - Web-based manifest viewer
 - Risk policy profiles by environment
 - Audit log normalization
 - CI/CD gates for unsafe agent configs
+- Delegation-chain visualization
 
 ---
 

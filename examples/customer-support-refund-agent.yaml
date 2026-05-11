@@ -14,31 +14,86 @@ delegation:
     - support_rep
     - support_manager
 
+delegation_chain:
+  may_call_agents: false
+  allowed_agents: []
+
+intent:
+  confirmation_required_for:
+    - external_email
+    - payment
+    - data_delete
+    - permission_change
+
+jit_authorization:
+  enabled: true
+  default_ttl_seconds: 300
+  require_fresh_context: true
+  bind_token_to:
+    - agent_id
+    - user_id
+    - tool
+    - action
+    - resource
+    - approval_id
+  revoke_after_use: true
+  max_session_extensions: 0
+
 tools:
   - name: zendesk.search_tickets
     access: read
+    auth_mode: delegated
     approval: none
 
   - name: stripe.create_refund
     access: write
-    approval: required
+    auth_mode: just_in_time
+    approval: human_confirm
     constraints:
       max_amount_usd: 100
+      token_ttl_seconds: 300
       allowed_reasons:
         - duplicate_charge
         - service_failure
 
   - name: email.send_external
     access: write
-    approval: required
+    auth_mode: just_in_time
+    approval: human_confirm
     constraints:
+      token_ttl_seconds: 120
       allowed_domains:
         - customer_domain_only
+
+data_flows:
+  - from: zendesk
+    to: stripe
+    allowed: true
+
+  - from: customer_records
+    to: external_email
+    allowed: false
+
+risk_tiers:
+  low:
+    approval: none
+  medium:
+    approval: notify
+  high:
+    approval: human_confirm
+  critical:
+    approval: block
+
+runtime:
+  enforce_manifest: true
+  detect_tool_drift: true
+  detect_new_destinations: true
 
 audit:
   log_prompt_summary: true
   log_tool_calls: true
   log_decisions: true
+  log_jit_grants: true
   retain_days: 365
 
 kill_switch:

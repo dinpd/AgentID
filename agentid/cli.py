@@ -13,7 +13,7 @@ from agentid.risk import risk_label, risk_score
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="agentid",
-        description="Validate, explain, score, generate policy for, and audit AI agent identity manifests.",
+        description="Validate, explain, score, generate policy for, and audit AI agent authority manifests.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -77,19 +77,15 @@ def main(argv: list[str] | None = None) -> int:
         if not result.ok:
             _print_validation(result)
             return 1
-
         try:
             events = load_audit_log(args.audit_log)
         except Exception as exc:
             print(f"ERROR: failed to load audit log: {exc}", file=sys.stderr)
             return 2
-
         ok, findings = audit_events(manifest, events)
-
         if ok:
             print("Audit passed. No policy violations found.")
             return 0
-
         print("Audit findings:")
         for finding in findings:
             print(f"- {finding}")
@@ -101,12 +97,10 @@ def main(argv: list[str] | None = None) -> int:
 def _print_validation(result, include_success: bool = True) -> None:
     if include_success and result.ok:
         print("Manifest is valid.")
-
     if result.errors:
         print("Errors:")
         for error in result.errors:
             print(f"- {error}")
-
     if result.warnings:
         print("Warnings:")
         for warning in result.warnings:

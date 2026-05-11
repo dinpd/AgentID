@@ -1,0 +1,20 @@
+# Changelog
+
+## 0.1.2
+
+- Added first-class just-in-time authorization support.
+- Added `jit_authorization` section to the manifest.
+- Added `auth_mode` support for tools: `delegated`, `service`, and `just_in_time`.
+- Updated validation to require JIT configuration when tools use `auth_mode: just_in_time`.
+- Updated risk scoring to reward short-lived JIT grants and penalize standing write/admin access.
+- Updated audit checks for missing or invalid JIT grants.
+- Updated OPA policy generation with starter JIT grant checks.
+
+## 0.1.1
+
+- Reframed AgentID as an agent authority contract, not just an identity manifest.
+- Added support for `intent`, `data_flows`, `delegation_chain`, `risk_tiers`, and `runtime`.
+- Added validation warnings for missing runtime, intent, delegation-chain, and data-flow controls.
+- Updated risk scoring to account for data-flow and agent-to-agent delegation risk.
+- Updated audit checks for data-flow violations and agent-to-agent calls.
+- Updated OPA policy generation with basic data-flow enforcement.
