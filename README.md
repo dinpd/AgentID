@@ -2,6 +2,8 @@
 
 **AgentID** is a lightweight open-source toolkit for declaring, validating, reviewing, and auditing AI agent authority.
 
+![AI Agents Need Eligibility Contracts](docs/AIAgentsNeedEligibilityContracts.png)
+
 The core idea is simple:
 
 > Every production agent should have an authority contract that says who it is, who owns it, what it can request, when authority should be issued just in time, where data can flow, when it needs approval, and how it can be stopped.
