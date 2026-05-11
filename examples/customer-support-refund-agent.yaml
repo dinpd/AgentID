@@ -1,0 +1,46 @@
+agent:
+  id: customer-support-refund-agent
+  name: Customer Support Refund Agent
+  owner: support-platform-team
+  environment: production
+  purpose: Handles refund triage and drafts refund decisions
+  expires_at: 2026-12-31
+
+delegation:
+  acts_for:
+    type: user
+    required: true
+  allowed_subjects:
+    - support_rep
+    - support_manager
+
+tools:
+  - name: zendesk.search_tickets
+    access: read
+    approval: none
+
+  - name: stripe.create_refund
+    access: write
+    approval: required
+    constraints:
+      max_amount_usd: 100
+      allowed_reasons:
+        - duplicate_charge
+        - service_failure
+
+  - name: email.send_external
+    access: write
+    approval: required
+    constraints:
+      allowed_domains:
+        - customer_domain_only
+
+audit:
+  log_prompt_summary: true
+  log_tool_calls: true
+  log_decisions: true
+  retain_days: 365
+
+kill_switch:
+  enabled: true
+  revoke_on_policy_violation: true

@@ -1,0 +1,23 @@
+[
+  {
+    "agent_id": "customer-support-refund-agent",
+    "tool": "zendesk.search_tickets",
+    "action": "read",
+    "approved": false,
+    "timestamp": "2026-05-09T10:00:00Z"
+  },
+  {
+    "agent_id": "customer-support-refund-agent",
+    "tool": "stripe.create_refund",
+    "action": "write",
+    "approved": true,
+    "timestamp": "2026-05-09T10:01:00Z"
+  },
+  {
+    "agent_id": "customer-support-refund-agent",
+    "tool": "email.send_external",
+    "action": "write",
+    "approved": false,
+    "timestamp": "2026-05-09T10:02:00Z"
+  }
+]
